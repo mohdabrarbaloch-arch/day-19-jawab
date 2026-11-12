@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Jawab — search that shows its work</title>
+<meta name="description" content="Ask a question, get an answer where every sentence is traceable to a real page." />
+<meta name="theme-color" content="#0b0d10" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/static/styles.css" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔎</text></svg>" />
+</head>
+<body>
+
+<!-- ── auth gate ─────────────────────────────────────────────── -->
+<div id="auth-screen" class="auth-screen">
+  <div class="auth-card">
+    <div class="brand-mark">جواب</div>
+    <h1 class="auth-title">Jawab</h1>
+    <p class="auth-sub">Search that shows its work. Every sentence links to the page it came from.</p>
+
+    <div class="auth-tabs" role="tablist">
+      <button class="auth-tab is-active" data-mode="login" role="tab">Sign in</button>
+      <button class="auth-tab" data-mode="register" role="tab">Create account</button>
+    </div>
+
+    <form id="auth-form" autocomplete="on">
+      <label class="field" id="name-field" hidden>
+        <span>Name</span>
+        <input type="text" name="display_name" placeholder="Your name" maxlength="80" />
+      </label>
+      <label class="field">
+        <span>Email</span>
+        <input type="email" name="email" placeholder="you@example.com" required autocomplete="email" />
+      </label>
+      <label class="field">
+        <span>Password</span>
+        <input type="password" name="password" placeholder="At least 8 characters" required minlength="8" maxlength="72" autocomplete="current-password" />
+      </label>
+      <p class="auth-error" id="auth-error" role="alert" hidden></p>
+      <button type="submit" class="btn-primary" id="auth-submit">Sign in</button>
+    </form>
+
+    <p class="auth-demo">Just looking? <button type="button" class="link-btn" id="demo-btn">Use the demo account</button></p>
+  </div>
+</div>
+
+<!-- ── app shell ─────────────────────────────────────────────── -->
+<div id="app" class="app" hidden>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <div class="logo">
+        <span class="logo-mark">جواب</span>
+        <span class="logo-text">Jawab</span>
+      </div>
+      <button class="icon-btn" id="new-thread" title="New search" aria-label="New search">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+    </div>
+
+    <nav class="thread-list" id="thread-list" aria-label="Recent searches"></nav>
+
+    <div class="sidebar-foot">
+      <div class="user-chip">
+        <div class="avatar" id="user-avatar">?</div>
+        <div class="user-meta">
+          <span class="user-name" id="user-name">—</span>
+          <span class="user-email" id="user-email">—</span>
+        </div>
+      </div>
+      <button class="icon-btn" id="logout-btn" title="Sign out" aria-label="Sign out">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <main class="main" id="main">
+    <header class="topbar">
+      <button class="icon-btn menu-btn" id="menu-btn" aria-label="Open menu">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+      <div class="topbar-title" id="topbar-title">New search</div>
+      <div class="topbar-spacer"></div>
+    </header>
+
+    <div class="scroll" id="scroll">
+
+      <!-- empty state -->
+      <section class="hero" id="hero">
+        <h1 class="hero-title">Ask anything.<br /><em>See where it came from.</em></h1>
+        <p class="hero-sub">Jawab reads real pages, then answers in sentences you can trace. No confident guessing.</p>
+        <div class="suggestions" id="suggestions">
+          <button class="suggestion" data-q="What is retrieval augmented generation and why does it reduce hallucination?">
+            <span class="sug-icon">◆</span>
+            <span>What is RAG and why does it reduce hallucination?</span>
+          </button>
+          <button class="suggestion" data-q="How does Pakistan's current account deficit work and what drives it?">
+            <span class="sug-icon">◆</span>
+            <span>How does Pakistan's current account deficit work?</span>
+          </button>
+          <button class="suggestion" data-q="What is the difference between SQLite WAL mode and rollback journal?">
+            <span class="sug-icon">◆</span>
+            <span>SQLite WAL mode vs rollback journal?</span>
+          </button>
+          <button class="suggestion" data-q="Why do transformer models need positional encoding?">
+            <span class="sug-icon">◆</span>
+            <span>Why do transformers need positional encoding?</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- conversation -->
+      <section class="conversation" id="conversation" hidden></section>
+
+    </div>
+
+    <!-- composer -->
+    <div class="composer-wrap">
+      <form class="composer" id="composer">
+        <textarea id="question" rows="1" placeholder="Ask a question…" maxlength="500" aria-label="Your question"></textarea>
+        <button type="submit" class="send-btn" id="send-btn" aria-label="Ask">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </form>
+      <p class="composer-hint">Jawab reads up to 5 pages per question. Answers cite what it actually read.</p>
+    </div>
+  </main>
+
+  <div class="scrim" id="scrim" hidden></div>
+</div>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

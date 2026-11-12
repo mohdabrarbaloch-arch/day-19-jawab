@@ -1,0 +1,58 @@
+# Two ways to run this, both one command.
+#
+#   docker compose up --build          → app + SQLite (default)
+#   docker compose --profile postgres up --build  → app + Postgres
+#
+# The app service reads DATABASE_URL, so switching is just which
+# profile you start.
+
+services:
+  app:
+    build: .
+    container_name: jawab-app
+    ports:
+      - "8000:8000"
+    environment:
+      ENVIRONMENT: production
+      DEBUG: "false"
+      # Overridden by the postgres profile below.
+      DATABASE_URL: ${DATABASE_URL:-sqlite:////app/data/jawab.db}
+      # Set this in a .env file next to this compose file.
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set — see .env.example}
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+      RATE_LIMIT_REQUESTS: ${RATE_LIMIT_REQUESTS:-30}
+      FETCH_PAGES: ${FETCH_PAGES:-5}
+    volumes:
+      - jawab-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=4).status==200 else 1)"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: jawab-postgres
+    profiles: ["postgres"]
+    environment:
+      POSTGRES_USER: jawab
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-jawab}
+      POSTGRES_DB: jawab
+    volumes:
+      - jawab-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jawab -d jawab"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  jawab-data:
+  jawab-pg:
